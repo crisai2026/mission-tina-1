@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}</style>
+<title>Mission Tina-1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one cinematic stage (porthole / visor / window) with a comms strip docked at the bottom and a mission timeline under it.
+   Nebula palette: deep violet space, fuchsia signal, aurora teal. Views are realistic; people and objects are pixel art. Single dark look by choice. */
+:root{
+  --void:#07050f; --deep:#120c24; --panel:#1a1233; --line:#3a2d5c;
+  --ink:#f3effa; --muted:#a99fc6; --dim:#6d618c;
+  --signal:#ff4fa3; --signal-soft:#ff9ad0; --violet:#a78bfa; --aurora:#7ee8d0; --ok:#8df0b8; --warn:#ffd36b;
+  --display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--void);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 24px}
+.app{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{margin:0;font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:.08em;text-transform:uppercase}
+.brand h1 b{color:var(--signal)}
+.clock{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em}
+.toggles{display:flex;gap:6px;flex-wrap:wrap}
+button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 14px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+button.on{border-color:var(--aurora);color:var(--aurora)}
+button.go{background:var(--signal);border-color:var(--signal);color:#2a0018;font-weight:600}
+button.go:hover{background:var(--signal-soft)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.toggles button{font-family:var(--mono);font-size:12px;padding:6px 10px}
+.pix{}
+
+.stage{position:relative;width:100%;height:clamp(460px,74vh,760px);border-radius:12px;overflow:hidden;background:var(--deep);border:1px solid var(--line)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;top:14px;left:16px;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--aurora);text-shadow:0 1px 6px rgba(0,0,0,.8);pointer-events:none;font-variant-numeric:tabular-nums}
+.hud b{color:var(--ink);font-weight:500}
+.scene-title{position:absolute;top:14px;right:16px;text-align:right;pointer-events:none}
+.scene-title .c{font-family:var(--mono);font-size:11px;color:var(--violet);margin-top:2px;letter-spacing:.04em}
+.scene-title .k{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--signal);text-transform:uppercase}
+.scene-title .t{font-family:var(--display);font-size:24px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.visor{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 72% 78% at 50% 48%,transparent 62%,rgba(7,5,15,.55) 80%,rgba(7,5,15,.95) 100%)}
+.visor::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.06),transparent 28%,transparent 70%,rgba(255,79,163,.05))}
+.mate{position:absolute;right:5%;bottom:30%;width:clamp(64px,9vw,104px);pointer-events:none;animation:floaty 7s ease-in-out infinite;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.mate.left{right:auto;left:6%}
+.calm .mate{animation:none}
+@keyframes floaty{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-16px) rotate(5deg)}}
+.layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;pointer-events:none}
+.layer>*{pointer-events:auto}
+.comms{position:absolute;left:16px;right:16px;bottom:16px;display:flex;gap:10px;align-items:center;justify-content:flex-start;flex-wrap:wrap;pointer-events:none}
+.msg{pointer-events:auto;max-width:600px;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:color-mix(in srgb,var(--void) 84%,transparent);border:1px solid var(--line);border-left:3px solid var(--rc,var(--aurora));border-radius:8px;padding:10px 14px;backdrop-filter:blur(6px)}
+.msg img{width:48px;height:48px;border-radius:6px;border:1px solid var(--line);image-rendering:pixelated}
+.msg .who{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--rc,var(--aurora));text-transform:uppercase}
+.msg p{margin:2px 0 0}
+.msg.gesture p{font-style:italic;color:var(--muted)}
+.msg.uplink{max-width:720px;border-left-width:5px}
+.msg.uplink p{font-size:16px}
+.acts{pointer-events:auto;display:flex;gap:8px;flex-wrap:wrap}
+.card{max-width:560px;background:color-mix(in srgb,var(--deep) 95%,transparent);border:1px solid var(--line);border-radius:12px;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.5);max-height:calc(100% - 24px);overflow:auto}
+.card h2{margin:0 0 6px;font-family:var(--display);font-weight:600;font-size:26px;letter-spacing:.04em;text-wrap:balance}
+.card .eyebrow,.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--signal)}
+.card p{margin:8px 0;color:#ddd6ec}
+.card .nerd{border-top:1px dashed var(--line);margin-top:12px;padding-top:10px;font-family:var(--mono);font-size:12.5px;color:var(--aurora)}
+.card .nerd b{color:var(--ink);font-weight:500}
+.card .row,.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ach{position:absolute;top:70px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--ok);color:var(--ok);font-family:var(--mono);font-size:12px;padding:5px 12px 5px 6px;border-radius:99px;pointer-events:none;transition:opacity .5s;white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden}
+.ach img{width:22px;height:22px}
+
+.mail{max-width:740px;width:100%;background:#f6f1f7;color:#231a2e;border-radius:10px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.6);display:grid;grid-template-columns:minmax(0,1fr) 220px;max-height:calc(100% - 8px)}
+.mail .main{padding:20px 22px;overflow:auto}
+.mail .meta{font-family:var(--mono);font-size:12px;color:#6a5f78;border-bottom:1px solid #ddd3e2;padding-bottom:10px;margin-bottom:10px;line-height:1.7}
+.mail .meta b{color:#231a2e;font-weight:500}
+.mail p{margin:8px 0;font-size:14.5px}
+.mail .form{margin-top:12px;border:1px solid #d5c9dc;border-radius:6px;padding:10px 12px;background:#fdfaff}
+.mail .form .ft{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#8a6f95;text-transform:uppercase;margin-bottom:6px}
+.mail label{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:5px 0;cursor:pointer}
+.mail label.off{color:#aa9fb3;cursor:not-allowed}
+.mail label small{display:block;font-family:var(--mono);font-size:11px;color:#c22a77}
+.mail input{accent-color:#d6307f;margin-top:3px}
+.mail .side{background:#231a2e;color:#efe8f5;padding:18px 16px;font-size:13px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.mail .side h3{margin:0;font-family:var(--display);font-size:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--signal-soft)}
+.mail .side ol,.mail .side ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.mail .side ul{list-style:none;padding:0;font-family:var(--mono);font-size:12px}
+.mail .side .fine{font-family:var(--mono);font-size:10.5px;color:#9a8faa}
+.mail .signbar{position:sticky;bottom:-20px;background:#f6f1f7;padding:10px 0 12px;margin-top:6px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-top:1px solid #ddd3e2}
+.mail .signbar span{font-family:var(--mono);font-size:12px;color:#6a5f78}
+
+.ticket{max-width:460px;background:#fff6fb;color:#2a1024;border-radius:6px;padding:18px 20px;font-family:var(--mono);font-size:13px;box-shadow:0 20px 60px rgba(0,0,0,.6);transform:rotate(-1deg)}
+.ticket .tn{font-size:12px;color:#a8457c}
+.ticket h2{font-family:var(--display);font-size:24px;margin:2px 0 8px;letter-spacing:.03em;color:#2a1024}
+.ticket dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0}
+.ticket dt{color:#8f6a82}.ticket dd{margin:0}
+.ticket .stamp{display:inline-block;margin-top:10px;border:2px solid #d6307f;color:#d6307f;padding:2px 8px;transform:rotate(-4deg);font-weight:500;letter-spacing:.1em}
+
+.circuit{max-width:640px;width:100%}
+.circuit svg{width:100%;height:auto;display:block}
+.term{cursor:pointer}
+.term circle{transition:r .15s}
+.term:hover circle,.term.sel circle{r:15}
+
+.finale{width:100%;height:100%;overflow:auto;display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:22px;align-items:start;padding:8px;max-width:980px}
+.finale .patchwrap{position:sticky;top:8px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.polaroid{background:#f6f1f7;padding:8px 8px 26px;transform:rotate(3deg);box-shadow:0 12px 40px rgba(0,0,0,.6);width:200px;max-width:100%}
+.polaroid img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000}
+.polaroid span{display:block;font-family:var(--mono);font-size:11px;color:#333;margin-top:6px;text-align:center}
+.finale h2{font-family:var(--display);font-size:34px;margin:0;letter-spacing:.05em;text-transform:uppercase}
+.achs{list-style:none;margin:10px 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px}
+.achs li{font-size:13.5px;border:1px solid var(--line);border-radius:6px;padding:6px 10px;background:color-mix(in srgb,var(--panel) 80%,transparent);display:flex;gap:8px;align-items:center}
+.achs li img{width:20px;height:20px;flex:none}
+.achs li.got{border-color:color-mix(in srgb,var(--ok) 60%,var(--line))}
+.achs li:not(.got){color:var(--dim)}
+.achs li:not(.got) img{filter:grayscale(1) opacity(.4)}
+.achs li.pending{border-style:dashed;color:var(--warn)}
+.facts{font-size:13.5px;color:#d6cfe6;margin:8px 0}
+.facts a{color:var(--aurora)}
+.seat2{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;border:1px solid var(--line);border-left:3px solid var(--violet);border-radius:8px;padding:10px 12px;margin:10px 0;background:color-mix(in srgb,var(--panel) 70%,transparent)}
+.seat2 img{width:54px}
+.seat2 p{margin:0;font-size:14px}
+.sign{font-family:var(--display);font-size:20px;letter-spacing:.08em;color:var(--signal-soft);text-transform:uppercase;margin-top:6px}
+
+.timeline{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.timeline button{width:100%;text-align:left;padding:8px 10px;background:transparent;border-color:var(--line);font-size:12.5px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.timeline .n{font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.1em}
+.timeline button.cur{border-color:var(--signal);background:color-mix(in srgb,var(--signal) 10%,transparent)}
+.timeline button.done .n{color:var(--ok)}
+.note{font-size:12.5px;color:var(--dim);text-align:center}
+@media (max-width:860px){
+  .mail{grid-template-columns:1fr}.mail .side{display:none}
+  .finale{grid-template-columns:1fr}
+  .timeline{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .scene-title .t{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){.ach{transition:none}.mate{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header>
+    <div class="brand"><h1>Mission <b>Tina-1</b></h1><span class="clock" id="clock">MISSION DAY 0 · STANDBY</span></div>
+    <div class="toggles">
+      <button id="tSound" title="Engine rumble, effects and ambient music">Sound: off</button>
+      <button id="tVoices" title="Radio voices read by your computer. Needs Sound on.">Voices: off</button>
+      <button id="tCalm" title="No shaking, no flashes">Calm mode: off</button>
+      <button id="tNums" title="Show the numbers. Off = words instead. Mission Control does the maths anyway.">Numbers: off</button>
+      <button id="tNerd" title="Show the physics behind each scene">Nerd mode: off</button>
+    </div>
+  </header>
+
+  <div class="stage" id="stage">
+    <canvas id="c2d"></canvas>
+    <div id="glhost" style="position:absolute;inset:0"></div>
+    <div class="visor" id="visor" hidden></div>
+    <img class="mate" id="mate" alt="Your crewmate in seat 2, floating nearby" hidden>
+    <div class="hud" id="hud"></div>
+    <div class="scene-title"><div class="k" id="stK"></div><div class="t" id="stT"></div><div class="c" id="stC"></div></div>
+    <div class="layer" id="layer"></div>
+    <div class="comms"><div class="msg" id="msg" hidden><img class="pix" id="face" alt=""><div><div class="who" id="who"></div><p id="say"></p></div></div><div class="acts" id="acts"></div></div>
+    <div class="ach" id="ach" style="opacity:0"><img class="pix" id="achI" alt=""><span id="achT"></span></div>
+  </div>
+
+  <ol class="timeline" id="timeline"></ol>
+  <p class="note">Real moments from astronaut Christina Koch's career, squeezed into one very long day. The jokes are ours; the facts are hers.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="app-1.js"></script>
+<script src="app-2.js"></script>
+
+</body>
+</html>
