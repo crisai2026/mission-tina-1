@@ -2,6 +2,8 @@
 
 A one-day astronaut experience that runs in the browser: a launch, a cargo ship caught with the robot arm, a spacewalk repair, Aotearoa from the window, Earthrise behind the Moon and a splashdown.
 
+https://crisai2026.github.io/mission-tina-1/
+
 Inspired by real moments from NASA astronaut Christina Koch's career. The jokes are ours; the facts are hers.
 
 Open `index.html`, or turn on GitHub Pages (Settings → Pages → Deploy from branch `main`, folder `/root`).
